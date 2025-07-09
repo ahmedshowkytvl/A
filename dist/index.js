@@ -110,7 +110,6 @@ __export(schema_exports, {
   visasRelations: () => visasRelations
 });
 import {
-import { fileURLToPath } from 'url';
   pgTable,
   text,
   integer,
@@ -4178,12 +4177,32 @@ import { z as z2 } from "zod";
 
 // server/services/gemini.ts
 import { GoogleGenerativeAI } from "@google/generative-ai";
+
+// server/config/api-keys.ts
+var API_KEYS = {
+  // Google AI API Key for translation services
+  GOOGLE_AI_API_KEY: "AIzaSyBLsuIPhfU7D26oG5JzUK6Pp8DrJ_-UaFI"
+  // You can add other API keys here as needed
+  // STRIPE_SECRET_KEY: "your_stripe_key_here",
+  // OPENAI_API_KEY: "your_openai_key_here",
+};
+
+// server/services/gemini.ts
 var GeminiService = class {
   genAI;
   model = "models/gemini-1.5-flash";
   imagineModel = "gemini-pro-vision";
   constructor() {
-    const apiKey = process.env.GOOGLE_API_KEY || "";
+    const apiKey = process.env.GOOGLE_AI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || API_KEYS.GOOGLE_AI_API_KEY;
+    console.log("\u{1F511} Google AI API Key status:", apiKey ? `Found (${apiKey.substring(0, 10)}...)` : "Not found");
+    console.log("\u{1F50D} Full environment check:", {
+      hasGoogleAIKey: !!process.env.GOOGLE_AI_API_KEY,
+      hasOldGoogleKey: !!process.env.GOOGLE_API_KEY,
+      hasGeminiKey: !!process.env.GEMINI_API_KEY,
+      nodeEnv: process.env.NODE_ENV,
+      keyLength: apiKey ? apiKey.length : 0,
+      usingFallback: !process.env.GOOGLE_AI_API_KEY && !process.env.GOOGLE_API_KEY && !process.env.GEMINI_API_KEY
+    });
     this.genAI = new GoogleGenerativeAI(apiKey);
   }
   /**
@@ -10173,14 +10192,14 @@ var vite_config_default = defineConfig({
   ],
   resolve: {
     alias: {
-      "@": path6.resolve(path.dirname(fileURLToPath(import.meta.url)), "client", "src"),
-      "@shared": path6.resolve(path.dirname(fileURLToPath(import.meta.url)), "shared"),
-      "@assets": path6.resolve(path.dirname(fileURLToPath(import.meta.url)), "attached_assets")
+      "@": path6.resolve(import.meta.dirname, "client", "src"),
+      "@shared": path6.resolve(import.meta.dirname, "shared"),
+      "@assets": path6.resolve(import.meta.dirname, "attached_assets")
     }
   },
-  root: path6.resolve(path.dirname(fileURLToPath(import.meta.url)), "client"),
+  root: path6.resolve(import.meta.dirname, "client"),
   build: {
-    outDir: path6.resolve(path.dirname(fileURLToPath(import.meta.url)), "dist/public"),
+    outDir: path6.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true
   }
 });
@@ -10221,7 +10240,7 @@ async function setupVite(app2, server) {
     const url = req.originalUrl;
     try {
       const clientTemplate = path7.resolve(
-        path.dirname(fileURLToPath(import.meta.url)),
+        import.meta.dirname,
         "..",
         "client",
         "index.html"
@@ -10240,7 +10259,7 @@ async function setupVite(app2, server) {
   });
 }
 function serveStatic(app2) {
-  const distPath = path7.resolve(path.dirname(fileURLToPath(import.meta.url)), "public");
+  const distPath = path7.resolve(import.meta.dirname, "public");
   if (!fs6.existsSync(distPath)) {
     throw new Error(
       `Could not find the build directory: ${distPath}, make sure to build the client first`
